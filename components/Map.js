@@ -16,7 +16,6 @@ const Map = () => {
   const [PMUMarker, setPMUMarker] = useState();
   const [PMUInfoWin, setPMUInfoWin] = useState();
   const [theme, setTheme] = useState({ mode: "normal", mapId: "6ed6726e9c3addcc" });
-  const [address, setAddress] = useState("");
 
   //Find Address of Location
   async function findLocationDetails(lng, lat, infowindow) {
@@ -24,7 +23,7 @@ const Map = () => {
     const res = await axios(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14`, {
       method: "GET",
     });
-    console.log("FInding my location", res.data.results[0]);
+
     if (res.data.results[0]) {
       console.log(res.data.results[0].formatted_address);
       const html = ReactDOMServer.renderToString(
@@ -167,7 +166,6 @@ const Map = () => {
 
   //OnClick FindMe Button
   function onFindMe(coords) {
-    console.log("IN find me", LngLat, PMUMarker, PMUMap);
     //Check and Clear any Marker
     if (PMUMarker) {
       PMUMarker.setMap(null);
@@ -196,13 +194,11 @@ const Map = () => {
 
   useEffect(() => {
     setTheme(theme);
-    console.log("Theme....", theme);
     setupMap();
   }, [theme]);
 
   useEffect(() => {
     setAdLL(AdLngLat);
-    console.log("address changed", AdLngLat);
     if (AdLngLat) {
       onFindMe(AdLngLat);
     }
@@ -213,12 +209,12 @@ const Map = () => {
       <div className="w-full h-full" ref={ref} id="map" />
 
       <div className="hidden">
+        {/* Search Button */}
         <input
           ref={searchRef}
           className="absolute !top-20 !left-1/2 transform -translate-x-1/2 outline-none !text-base  border-slate-100 focus:border-slate-500 border rounded-xl bg-slate-50 px-5 py-3 w-2/3 md:w-70"
           placeholder="Enter your address"
         ></input>
-        {/* Search Button */}
 
         {/* Find Me Button */}
         <button
