@@ -18,16 +18,17 @@ const Map = () => {
   const [theme, setTheme] = useState({ mode: "normal", mapId: "6ed6726e9c3addcc" });
 
   //Find Address of Location
-  async function findLocationDetails(lng, lat, infowindow) {
+  async function findLocationDetails(lng, lat, infowindow, name) {
     //1) Send google geo coding api
     const res = await axios(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14`, {
       method: "GET",
     });
 
     if (res.data.results[0]) {
-      console.log(res.data.results[0].formatted_address);
+      console.log(res.data.results[0]);
       const html = ReactDOMServer.renderToString(
         <LocDetails
+          name={res.data.results[0].address_components[1].long_name}
           address={res.data.results[0].formatted_address}
           address2={res.data.results[2].formatted_address}
           lng={lng}
@@ -40,7 +41,7 @@ const Map = () => {
   }
 
   //Find Coord of Address
-  async function findCoords(address, location, infowindow) {
+  async function findCoords(address, location, name, infowindow) {
     const res = await axios(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14`, {
       method: "GET",
     });
@@ -50,7 +51,9 @@ const Map = () => {
     console.log("Old lat lng", AdLngLat);
 
     if (res.data.results[0].geometry.location) {
-      const html = ReactDOMServer.renderToString(<LocDetails address={location} lng={res.data.results[0].geometry.location.lng} lat={res.data.results[0].geometry.location.lat}></LocDetails>);
+      const html = ReactDOMServer.renderToString(
+        <LocDetails name={name} address={location} lng={res.data.results[0].geometry.location.lng} lat={res.data.results[0].geometry.location.lat}></LocDetails>
+      );
       infowindow.setContent(html);
     }
   }
@@ -95,7 +98,7 @@ const Map = () => {
       console.log("PLace change", place);
       console.log("Address is", searchRef.current.value);
       if (place) {
-        findCoords(searchRef.current.value, place.formatted_address, infowindow);
+        findCoords(searchRef.current.value, place.formatted_address, place.name, infowindow);
       }
 
       if (!place.geometry || !place.geometry.location) {
