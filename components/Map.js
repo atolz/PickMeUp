@@ -139,7 +139,7 @@ const Map = () => {
       <div className="w-full h-full" ref={ref} id="map" />
       <button
         onClick={onFindMe}
-        className={`rounded-xl text-slate-100 ${
+        className={`rounded-xl ${
           theme.mode == "normal" ? "text-slate-100 bg-gray-800 " : "bg-slate-100 text-gray-900 "
         } text-xl absolute bottom-10 w-2/3 md:w-64 grid content-center cursor-pointer left-1/2 transform -translate-x-1/2 outline-none border-0 px-4 py-2`}
       >
