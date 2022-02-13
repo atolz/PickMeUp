@@ -11,10 +11,12 @@ const Map = () => {
   const modeCtrlDarkRef = useRef();
   const searchRef = useRef();
   const [LngLat, setLL] = useState();
+  const [AdLngLat, setAdLL] = useState();
   const [PMUMap, setPMUMap] = useState();
   const [PMUMarker, setPMUMarker] = useState();
   const [PMUInfoWin, setPMUInfoWin] = useState();
   const [theme, setTheme] = useState({ mode: "normal", mapId: "6ed6726e9c3addcc" });
+  const [address, setAddress] = useState("");
 
   //Find Address of Location
   async function findLocationDetails(lng, lat, infowindow) {
@@ -22,7 +24,7 @@ const Map = () => {
     const res = await axios(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14`, {
       method: "GET",
     });
-
+    console.log("FInding my location", res.data.results[0]);
     if (res.data.results[0]) {
       console.log(res.data.results[0].formatted_address);
       const html = ReactDOMServer.renderToString(
@@ -34,6 +36,22 @@ const Map = () => {
           locationtype={res.data.results[0].geometry.location_type}
         ></LocDetails>
       );
+      infowindow.setContent(html);
+    }
+  }
+
+  //Find Coord of Address
+  async function findCoords(address, location, infowindow) {
+    const res = await axios(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14`, {
+      method: "GET",
+    });
+
+    console.log(res.data.results[0].geometry.location);
+    setAdLL({ lat: res.data.results[0].geometry.location.lat, lng: res.data.results[0].geometry.location.lng });
+    console.log("Old lat lng", AdLngLat);
+
+    if (res.data.results[0].geometry.location) {
+      const html = ReactDOMServer.renderToString(<LocDetails address={location} lng={res.data.results[0].geometry.location.lng} lat={res.data.results[0].geometry.location.lat}></LocDetails>);
       infowindow.setContent(html);
     }
   }
@@ -71,11 +89,15 @@ const Map = () => {
     autocomplete.bindTo("bounds", map);
 
     autocomplete.addListener("place_changed", () => {
-      console.log("PLace change");
       infowindow.close();
-      marker.setVisible(false);
+      // marker.setVisible(false);
 
       const place = autocomplete.getPlace();
+      console.log("PLace change", place);
+      console.log("Address is", searchRef.current.value);
+      if (place) {
+        findCoords(searchRef.current.value, place.formatted_address, infowindow);
+      }
 
       if (!place.geometry || !place.geometry.location) {
         // User entered the name of a Place that was not suggested and
@@ -144,26 +166,31 @@ const Map = () => {
   }
 
   //OnClick FindMe Button
-  function onFindMe() {
+  function onFindMe(coords) {
     console.log("IN find me", LngLat, PMUMarker, PMUMap);
     //Check and Clear any Marker
     if (PMUMarker) {
       PMUMarker.setMap(null);
     }
 
+    if (PMUInfoWin) {
+      PMUInfoWin.close();
+      console.log("closing info window");
+    }
+
     //Set Marker on Map i.e Make Marker now Visible
     PMUMarker.setMap(PMUMap);
-    PMUMarker.setPosition(LngLat);
+    PMUMarker.setPosition(coords);
     PMUInfoWin.open({
       anchor: PMUMarker,
       map: PMUMap,
-      shouldFocus: false,
+      shouldFocus: true,
     });
+    PMUMap.setCenter(coords);
   }
 
   useEffect(() => {
     //Initialize App Map
-    console.log("Rirst Theme....", theme);
     setupMap();
   }, []);
 
@@ -173,22 +200,33 @@ const Map = () => {
     setupMap();
   }, [theme]);
 
+  useEffect(() => {
+    setAdLL(AdLngLat);
+    console.log("address changed", AdLngLat);
+    if (AdLngLat) {
+      onFindMe(AdLngLat);
+    }
+  }, [AdLngLat]);
+
   return (
     <div className="h-full w-full relative">
       <div className="w-full h-full" ref={ref} id="map" />
 
-      <input
-        ref={searchRef}
-        className="absolute !top-20 !left-1/2 transform -translate-x-1/2 outline-none !text-base  border-slate-100 focus:border-slate-500 border rounded-xl bg-slate-50 px-5 py-3 w-2/3 md:w-70"
-        placeholder="Enter your address"
-      ></input>
       <div className="hidden">
+        <input
+          ref={searchRef}
+          className="absolute !top-20 !left-1/2 transform -translate-x-1/2 outline-none !text-base  border-slate-100 focus:border-slate-500 border rounded-xl bg-slate-50 px-5 py-3 w-2/3 md:w-70"
+          placeholder="Enter your address"
+        ></input>
         {/* Search Button */}
 
         {/* Find Me Button */}
         <button
           ref={findMeCtrlRef}
-          onClick={onFindMe}
+          onClick={() => {
+            onFindMe(LngLat);
+            findLocationDetails(LngLat.lng, LngLat.lat, PMUInfoWin);
+          }}
           className={`rounded-xl ${
             theme.mode == "normal" ? "text-slate-100 bg-gray-800 " : "bg-slate-100 text-gray-900 "
           } text-xl absolute bottom-10 w-2/3 md:w-64 grid content-center cursor-pointer left-1/2 transform -translate-x-1/2 outline-none border-0 px-4 py-2`}

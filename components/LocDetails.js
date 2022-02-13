@@ -6,9 +6,11 @@ const LocDetails = ({ address, address2, lng, lat, locationtype }) => {
       <p className=" border-b-gray-600 border-b pb-2 mb-2 border-dashed text-sm text-gray-600 font-medium">
         Address: <span className="text-sm text-gray-900 font-bold">{address} </span>
       </p>
-      <p className=" border-b-gray-600 border-b pb-2 mb-2 border-dashed text-sm text-gray-600 font-medium">
-        Address 2: <span className="text-sm text-gray-900 font-bold">{address2} </span>
-      </p>
+      {address2 && (
+        <p className=" border-b-gray-600 border-b pb-2 mb-2 border-dashed text-sm text-gray-600 font-medium">
+          Address 2: <span className="text-sm text-gray-900 font-bold">{address2} </span>
+        </p>
+      )}
       <p>
         <span>Lng:{lng} </span>
       </p>
