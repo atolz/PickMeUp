@@ -24,7 +24,7 @@ export default function Home() {
       </Head>
 
       <div className="w-full h-full">
-        <Wrapper apiKey={"AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14"} render={render} />
+        <Wrapper apiKey={"AIzaSyCXLrz-WThV4cNntmzzW4w75L7uwqU-u14&libraries=places"} render={render} />
       </div>
     </div>
   );

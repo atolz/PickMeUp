@@ -6,6 +6,10 @@ import LocDetails from "./LocDetails";
 
 const Map = () => {
   const ref = useRef();
+  const findMeCtrlRef = useRef();
+  const modeCtrlRef = useRef();
+  const modeCtrlDarkRef = useRef();
+  const searchRef = useRef();
   const [LngLat, setLL] = useState();
   const [PMUMap, setPMUMap] = useState();
   const [PMUMarker, setPMUMarker] = useState();
@@ -49,6 +53,39 @@ const Map = () => {
       disableDefaultUI: true,
       fullscreenControl: true,
     });
+
+    // Controls
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(findMeCtrlRef.current);
+    map.controls[google.maps.ControlPosition.LEFT_TOP].push(modeCtrlRef.current);
+    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(modeCtrlDarkRef.current);
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(searchRef.current);
+
+    // Google Search API
+    const options = {
+      fields: ["formatted_address", "geometry", "name"],
+      strictBounds: false,
+      types: ["establishment"],
+    };
+    console.log(searchRef);
+    const autocomplete = new google.maps.places.Autocomplete(searchRef.current, options);
+    autocomplete.bindTo("bounds", map);
+
+    autocomplete.addListener("place_changed", () => {
+      console.log("PLace change");
+      infowindow.close();
+      marker.setVisible(false);
+
+      const place = autocomplete.getPlace();
+
+      if (!place.geometry || !place.geometry.location) {
+        // User entered the name of a Place that was not suggested and
+        // pressed the Enter key, or the Place Details request failed.
+        window.alert("No details available for input: '" + place.name + "'");
+        return;
+      }
+    });
+
+    console.log(google.maps, map.controls);
     setPMUMap(map);
 
     //Init Infowindow
@@ -126,31 +163,46 @@ const Map = () => {
 
   useEffect(() => {
     //Initialize App Map
+    console.log("Rirst Theme....", theme);
     setupMap();
   }, []);
 
   useEffect(() => {
     setTheme(theme);
+    console.log("Theme....", theme);
     setupMap();
   }, [theme]);
 
   return (
     <div className="h-full w-full relative">
       <div className="w-full h-full" ref={ref} id="map" />
-      <button
-        onClick={onFindMe}
-        className={`rounded-xl ${
-          theme.mode == "normal" ? "text-slate-100 bg-gray-800 " : "bg-slate-100 text-gray-900 "
-        } text-xl absolute bottom-10 w-2/3 md:w-64 grid content-center cursor-pointer left-1/2 transform -translate-x-1/2 outline-none border-0 px-4 py-2`}
-      >
-        Find Me
-      </button>
-      {theme.mode == "normal" && (
+
+      <input
+        ref={searchRef}
+        className="absolute !top-20 !left-1/2 transform -translate-x-1/2 outline-none !text-base  border-slate-100 focus:border-slate-500 border rounded-xl bg-slate-50 px-5 py-3 w-2/3 md:w-70"
+        placeholder="Enter your address"
+      ></input>
+      <div className="hidden">
+        {/* Search Button */}
+
+        {/* Find Me Button */}
         <button
+          ref={findMeCtrlRef}
+          onClick={onFindMe}
+          className={`rounded-xl ${
+            theme.mode == "normal" ? "text-slate-100 bg-gray-800 " : "bg-slate-100 text-gray-900 "
+          } text-xl absolute bottom-10 w-2/3 md:w-64 grid content-center cursor-pointer left-1/2 transform -translate-x-1/2 outline-none border-0 px-4 py-2`}
+        >
+          Find Me
+        </button>
+
+        {/* Toggle Mode Button */}
+        <button
+          ref={modeCtrlRef}
           onClick={() => {
             onThemeChange({ mode: "dark", mapId: "762f5b71fde50465" });
           }}
-          className="absolute top-4 left-2.5 rounded-xl text-slate-100 bg-gray-900 text-xl outline-none border-0 px-3 p-3"
+          className={`absolute !top-4 !left-2.5 rounded-xl text-slate-100 bg-gray-900 text-xl outline-none border-0 px-3 p-3 grid w-min h-min ${theme.mode == "normal" ? " block" : " hidden"}`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
             <path
@@ -160,19 +212,19 @@ const Map = () => {
             />
           </svg>
         </button>
-      )}
-      {theme.mode == "dark" && (
+
         <button
+          ref={modeCtrlDarkRef}
           onClick={() => {
             onThemeChange({ mode: "normal", mapId: "6ed6726e9c3addcc" });
           }}
-          className="absolute top-4 left-2.5 rounded-xl bg-slate-100 text-gray-900 text-xl outline-none border-0 px-3 p-3"
+          className={`absolute !top-4 !left-2.5 rounded-xl bg-slate-100 text-gray-900 text-xl outline-none border-0 px-3 p-3 w-min h-min ${theme.mode == "dark" ? " block" : " hidden"}`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
         </button>
-      )}
+      </div>
     </div>
   );
 };
